@@ -1,5 +1,5 @@
 import re
-import math
+from math import gcd, ceil
 
 with open('d13_input.txt', 'r') as f:
     x = f.read().strip()
@@ -9,7 +9,7 @@ PART1 = 25751
 TEST2 = None
 PART2 = None
 
-FIRST = False
+FIRST = True
 if TEST:
 
     x = """Button A: X+94, Y+34
@@ -46,8 +46,8 @@ def machine_forumla(machine):
 
 def find_solutions(ax, bx, ay, by, x, y):
     # X position calculation
-    max_x = math.ceil(x/min(ax, bx))
-    max_y = math.ceil(y/min(ay,by))
+    max_x = ceil(x/min(ax, bx))
+    max_y = ceil(y/min(ay,by))
     x_counts = []
     for X in range(max_x):
         for Y in range(max_y):
@@ -68,9 +68,28 @@ def find_cheapest(solutions):
         return 0
     return min([a * 3 + b * 1 for a,b in solutions])
 
+def pre_validate(ax, bx, ay, by, x, y):
+    gx = gcd(ax, bx)
+    if x % gx != 0:
+        return False
+    gy = gcd(ay, by)
+    if y % gy != 0:
+        return False
+    return ax // gx, bx // gx, ay // gy, by // gy, x // gx, y // gy
+def extended_gcd(a, b):
+    if b == 0:
+        return a, 1, 0
+    g, x1, y1 = extended_gcd(b, a % b)
+    x, y = y1, x1 - (a // b) * y1
+    return g, x, y
+
 tokens = 0
 for m in machines:
     f = machine_forumla(m)
+    f = pre_validate(*f)
+    if not f:
+        continue
+    _, x0, y0 = extended_gcd(f[0], f[1])
     v = find_solutions(*f)
     tokens += find_cheapest(v)
     print(v)
